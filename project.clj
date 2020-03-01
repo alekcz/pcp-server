@@ -30,7 +30,8 @@
                  [selmer "1.12.18"]
                  [borkdude/sci "0.0.13-alpha.12"]
                  [clj-jgit "1.0.0-beta3"]
-                 [environ "1.1.0"]]
+                 [environ "1.1.0"]
+                 [tick "0.4.23-alpha"]]
 
   :min-lein-version "2.0.0"
   
