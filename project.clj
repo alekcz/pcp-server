@@ -1,7 +1,7 @@
 (defproject pcp "0.1.0-SNAPSHOT"
 
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
+  :description "PCP: Clojure Processor - Like drugs but better"
+  :url "https://github.com/alekcz/pcp"
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [cheshire "5.9.0"]
@@ -31,7 +31,11 @@
                  [borkdude/sci "0.0.13-alpha.12"]
                  [clj-jgit "1.0.0-beta3"]
                  [environ "1.1.0"]
-                 [tick "0.4.23-alpha"]]
+                 [tick "0.4.23-alpha"]
+                 [rum "0.11.4"]
+                 [stasis "2.5.0"]
+                 [clj-http "3.10.0"]
+                 [pathetic "0.5.1"]]
 
   :min-lein-version "2.0.0"
   
@@ -59,7 +63,8 @@
                                  [ring/ring-devel "1.8.0"]
                                  [ring/ring-mock "0.4.0"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.24.1"]
-                                 [jonase/eastwood "0.3.5"]]
+                                 [jonase/eastwood "0.3.5"]
+                                 [lein-shell "0.5.0"]]
                   
                   :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
@@ -70,4 +75,13 @@
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
-   :profiles/test {}})
+   :profiles/test {}}
+   ;https://github.com/BrunoBonacci/graalvm-clojure/blob/master/doc/clojure-graalvm-native-binary.md
+   :aliases
+    {"native"
+    ["shell"
+      "native-image" "--report-unsupported-elements-at-runtime"
+      "--initialize-at-build-time"
+      ;"-jar" "./target/uberjar/${:uberjar-name:-${:name}-${:version}.jar}"
+      "-jar" "./target/uberjar/${:uberjar-name:-${:name}.jar}"
+      "-H:Name=./target/${:name}"]})

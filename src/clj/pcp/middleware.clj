@@ -8,6 +8,8 @@
     [muuntaja.middleware :refer [wrap-format wrap-params]]
     [pcp.config :refer [env]]
     [ring-ttl-session.core :refer [ttl-memory-store]]
+    [ring.middleware.content-type :refer [wrap-content-type]]
+    [ring.middleware.not-modified :refer [wrap-not-modified]]
     [ring.middleware.defaults :refer [site-defaults wrap-defaults]]))
 
 
@@ -23,4 +25,6 @@
       (wrap-defaults
         (-> site-defaults
             ;(assoc-in [:security :anti-forgery] false)
-            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))))
+            (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
+      (wrap-content-type)
+      (wrap-not-modified)))
