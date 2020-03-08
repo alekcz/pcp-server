@@ -37,7 +37,8 @@
                  ;specifically for the pcp environment
                  [clj-http "3.10.0"]
                  [hiccup "1.0.5"]
-                 [tick "0.4.23-alpha"]]
+                 [tick "0.4.23-alpha"]
+                 [org.clojure/math.numeric-tower "0.0.4"]]
 
   :min-lein-version "2.0.0"
   

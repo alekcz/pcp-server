@@ -11,7 +11,8 @@
    [selmer.parser :as selmer-parser]
    [selmer.filters :as selmer-filters]
    [clj-http.client :as client]
-   [tick.alpha.api :as t]))
+   [tick.alpha.api :as t]
+   [clojure.math.numeric-tower :as math]))
 
 (defn extract-namespace [namespace]
   (into {} (ns-publics namespace)))
@@ -22,7 +23,8 @@
     'selmer.parser (extract-namespace 'selmer.parser)
     'selmer.filters (extract-namespace 'selmer.filters)
     'clj-http.client (extract-namespace 'clj-http.client)
-    'tick.alpha.api (extract-namespace 'tick.alpha.api)})
+    'tick.alpha.api (extract-namespace 'tick.alpha.api)
+    'clojure.math.numeric-tower (extract-namespace 'clojure.math.numeric-tower)})
 
 (defn format-response [status body mime-type]
   (-> (resp/response body)    
