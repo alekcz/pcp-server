@@ -32,11 +32,12 @@
     :cookies (:cookies request)
     :anti-forgery-token (:anti-forgery-token request)})
 
-(def CONFIG "./pcp.edn")
+(def CONFIG "./pcp.edan")
+(def DEFAULT-CONFIG "{:sites {:localhost {:root \"src\"}}}")
 (def my-pool (at-at/mk-pool))
 
 (defn get-config []
-  (or (env :pcp-config) (slurp CONFIG)))
+  (or (env :pcp-config) (try (slurp CONFIG) (catch Exception e nil)) DEFAULT-CONFIG))
 
 (def config (atom (read-string (get-config))))
 
