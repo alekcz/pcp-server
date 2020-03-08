@@ -29,13 +29,15 @@
                  [ring/ring-defaults "0.3.2"]
                  [selmer "1.12.18"]
                  [borkdude/sci "0.0.13-alpha.12"]
-                 [clj-jgit "1.0.0-beta3"]
                  [environ "1.1.0"]
-                 [tick "0.4.23-alpha"]
-                 [rum "0.11.4"]
                  [stasis "2.5.0"]
+                 [overtone/at-at "1.2.0"]
+                 [digest "1.4.9"]
+                 [me.raynes/fs "1.4.6"]
+                 ;specifically for the pcp environment
                  [clj-http "3.10.0"]
-                 [pathetic "0.5.1"]]
+                 [hiccup "1.0.5"]
+                 [tick "0.4.23-alpha"]]
 
   :min-lein-version "2.0.0"
   

@@ -1,26 +1,16 @@
 (ns pcp.routes.processor
   (:require
    [pcp.middleware :as middleware]
-   [pcp.helpers :as helpers]
-   [ring.util.response :as resp]
-   [sci.core :as sci]
+   [pcp.engine :as pcp]
    [clojure.string :as str]
-   [stasis.core :as stasis]
-   ;the below are included to force deps to download
-   [cheshire.core :as json]
-   [selmer.parser :as selmer-parser]
-   [selmer.filters :as selmer-filters]
+   [overtone.at-at :as at-at]
+   [digest :as digest]
+   [clojure.java.io :as io]
    [clj-http.client :as client]
-   ))
-
-(defn extract-namespace [namespace]
-  (into {} (ns-publics namespace)))
-
-(def namespaces
-  {'cheshire.core (extract-namespace 'cheshire.core)
-   'selmer.parser (extract-namespace 'selmer.parser)
-   'selmer.filters (extract-namespace 'selmer.filters)
-   'clj-http.client (extract-namespace 'clj-http.client)})
+   [environ.core :refer [env]]
+   [me.raynes.fs :as fs]
+   [me.raynes.fs.compression :as compression]))
+   
 
 (defn extract-request-parameters [request] ;malli can make this nicer
   { :request-method (:request-method request)
@@ -42,80 +32,91 @@
     :cookies (:cookies request)
     :anti-forgery-token (:anti-forgery-token request)})
 
+(def CONFIG "./pcp.edn")
+(def my-pool (at-at/mk-pool))
 
-(def config (atom {:servers {:localhost {:root "www/127.0.0.1"}}}))
+(defn get-config []
+  (or (env :pcp-config) (slurp CONFIG)))
+
+(def config (atom (read-string (get-config))))
+
+(defn load-config []
+  (let [new-config (read-string (get-config))]
+    (reset! config (merge new-config @config))))
+
+(defn write-and-extract-zip [stream path]
+  (with-open [w (io/output-stream (str path ".zip"))]
+    (.write w stream))
+  (compression/unzip (str path ".zip") path)
+  (fs/delete (str path ".zip")))
+
+(defn process-sites []
+  (doseq [site (-> @config :sites)]
+    (let [name (first site)
+          data (second site)]
+      (cond 
+        (contains? data :root)
+          nil    
+
+        (contains? data :github)
+          (let [zip (str/replace (:github data) ".git" "/archive/master.zip")
+                path (str ".pcp-sites/" (digest/sha-256 zip))]
+            (->
+                  (client/get zip { :headers {:Authorization (str "token " (:token data))}
+                                            :as :byte-array})
+                  (:trace-redirects)
+                  (first)
+                  (client/get {:as :byte-array})
+                  (:body)
+                  (write-and-extract-zip path))
+            (let [new-root (-> (fs/find-files path #".*?src") first str (str/replace (str (.getCanonicalPath (clojure.java.io/file ".")) "/") ""))]
+              (swap! config assoc-in [:sites name :root] new-root)))
+
+          :else nil))))
 
 (defn get-root [host]
-  (:root ((keyword host) (:servers @config))))
+  (:root ((keyword host) (:sites @config))))
 
 (defn add-extension [path]
   (if (str/ends-with? path "/") 
       (str path "index.clj")
       path))
 
-(defn format-response [status body mime-type]
-  (-> (resp/response body)    
-      (resp/status status)
-      (resp/content-type mime-type)))   
-
-(defn file-response [body]
-  (if (resp/response? body)
-    body
-    (-> (resp/response body)    
-        (resp/status 200))))   
-
 (defn read-source [path]
   (try
     (let [final-path (add-extension path)]
       (str (slurp final-path)))
-    (catch java.io.FileNotFoundException fnfe (format-response 404 nil :plain))))
-
+    (catch java.io.FileNotFoundException fnfe nil)))
 
 (defn load-source [pcp-params]
-  (let [host (get-root (:server-name pcp-params))
+  (let [root (get-root (:server-name pcp-params))
         path (:path pcp-params)]
-    (str host path)))
-
-(defn process-includes [includes source]
-  (let [includes-used (re-seq #"\(include\s*?\"(.*?)\"\s*?\)" source)]
-    (loop [code source externals includes-used]
-      (if (empty? externals)
-        code
-        (let [included (get includes (-> externals first second))]
-          (if (nil? included)
-            (throw 
-              (ex-info (str "Included file '" (-> externals first second) "' was not found.")
-                        {:cause   (str (-> externals first first))}))
-            (recur 
-              (str/replace code (-> externals first first) included) 
-              (rest externals))))))))
-
-(defn run-source [source pcp-params]
-  (let [includes (stasis/slurp-directory (get-root (:server-name pcp-params)) #"\.clj$")
-        opts  { :namespaces namespaces
-                :bindings { 'pcp (sci/new-var 'pcp pcp-params)
-                            'include identity
-                            'response (sci/new-var 'response format-response)}}
-        full-source (process-includes includes source)]
-    (sci/eval-string full-source opts)))
+    (str root path)))
 
 (defn process-request [request]
   (let [pcp-params (extract-request-parameters request)
-        source (->  pcp-params (load-source) (read-source))]
-    (cond
-      (str/ends-with? (:path pcp-params) "/")  (run-source source pcp-params)
-      (str/ends-with? (:path pcp-params) ".clj") (run-source source pcp-params)
-      :else (file-response source))))
+        root (get-root (:server-name pcp-params))
+        source (-> pcp-params load-source read-source)]
+    (if (string? source)
+      (cond
+        (str/ends-with? (:path pcp-params) "/")  (pcp/run source :params pcp-params :root root)
+        (str/ends-with? (:path pcp-params) ".clj") (pcp/run source :params pcp-params :root root)
+        :else (pcp/file-response source))
+      (pcp/format-response 404 nil nil))))
 
 (defn request-handler [request]
   (try 
     (process-request request)
-    (catch Exception e (format-response 500 nil :plain))))
+    (catch Exception e (pcp/format-response 500 nil nil))))
 
 (defn process-routes []
   [""
    {:middleware [middleware/wrap-formats]}
    ["*" {:handler process-request}]])
 
-(def pcp-params "")
-(def variable-here "")
+
+(fs/delete-dir ".pcp-sites/")
+(fs/mkdir ".pcp-sites/")
+(process-sites)
+(at-at/every 20000 process-sites my-pool)
+(at-at/every 30000 load-config my-pool)
