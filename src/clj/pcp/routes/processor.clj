@@ -82,7 +82,7 @@
 
 (defn add-extension [path]
   (if (str/ends-with? path "/") 
-      (str path "index.clj")
+      (str path "index.html")
       path))
 
 (defn read-source [path]
