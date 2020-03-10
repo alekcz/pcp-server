@@ -54,7 +54,6 @@
 
 (defn process-sites []
   (doseq [site (-> @config :sites)]
-    (println site)
     (let [name (first site)
           data (second site)]
       (cond 
@@ -87,13 +86,13 @@
 
 (defn read-source [path]
   (try
-    (let [final-path (add-extension path)]
-      (str (slurp final-path)))
+    (str (slurp path))
     (catch java.io.FileNotFoundException fnfe nil)))
 
 (defn load-source [pcp-params]
   (let [root (get-root (:server-name pcp-params))
-        path (:path pcp-params)]
+        path (add-extension (:path pcp-params))]
+    (println (:server-name pcp-params))
     (str root path)))
 
 (defn process-request [request]
@@ -101,11 +100,11 @@
         root (get-root (:server-name pcp-params))
         path (-> pcp-params load-source)]
     (println path)
-    (if (str/ends-with? (:path pcp-params) ".clj")
-        (pcp/run (read-source path) :params pcp-params :root root)
-        (if (fs/exists? path)
-            (pcp/file-response (io/file path))
-            (pcp/format-response 404 nil nil)))))
+    (cond 
+        (str/ends-with? path ".clj") (pcp/run (read-source path) :params pcp-params :root root)
+        (str/ends-with? path ".html") (pcp/format-response 200 (io/file path) "text/html")
+        (fs/exists? path) (pcp/file-response (io/file path))
+        :else (pcp/format-response 404 nil nil))))
 
 (defn request-handler [request]
   (try 
