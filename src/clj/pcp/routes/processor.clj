@@ -32,7 +32,7 @@
     :cookies (:cookies request)
     :anti-forgery-token (:anti-forgery-token request)})
 
-(def CONFIG "./pcp.edan")
+(def CONFIG "./pcp.edn")
 (def DEFAULT-CONFIG "{:sites {:localhost {:root \"src\"}}}")
 (def my-pool (at-at/mk-pool))
 
@@ -43,6 +43,7 @@
 
 (defn load-config []
   (let [new-config (read-string (get-config))]
+    (println new-config)
     (reset! config (merge new-config @config))))
 
 (defn write-and-extract-zip [stream path]
@@ -53,6 +54,7 @@
 
 (defn process-sites []
   (doseq [site (-> @config :sites)]
+    (println site)
     (let [name (first site)
           data (second site)]
       (cond 
@@ -97,13 +99,13 @@
 (defn process-request [request]
   (let [pcp-params (extract-request-parameters request)
         root (get-root (:server-name pcp-params))
-        source (-> pcp-params load-source read-source)]
-    (if (string? source)
-      (cond
-        (str/ends-with? (:path pcp-params) "/")  (pcp/run source :params pcp-params :root root)
-        (str/ends-with? (:path pcp-params) ".clj") (pcp/run source :params pcp-params :root root)
-        :else (pcp/file-response source))
-      (pcp/format-response 404 nil nil))))
+        path (-> pcp-params load-source)]
+    (println path)
+    (if (str/ends-with? (:path pcp-params) ".clj")
+        (pcp/run (read-source path) :params pcp-params :root root)
+        (if (fs/exists? path)
+            (pcp/file-response (io/file path))
+            (pcp/format-response 404 nil nil)))))
 
 (defn request-handler [request]
   (try 
@@ -116,8 +118,10 @@
    ["*" {:handler process-request}]])
 
 
-(fs/delete-dir ".pcp-sites/")
-(fs/mkdir ".pcp-sites/")
-(process-sites)
-(at-at/every 20000 process-sites my-pool)
-(at-at/every 30000 load-config my-pool)
+(defn init [] 
+  (do
+    (fs/delete-dir ".pcp-sites/")
+    (fs/mkdir ".pcp-sites/")
+    (process-sites)
+    (at-at/every 20000 process-sites my-pool)
+    (at-at/every 30000 load-config my-pool)))

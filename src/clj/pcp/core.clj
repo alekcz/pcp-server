@@ -1,6 +1,7 @@
 (ns pcp.core
   (:require
     [pcp.handler :as handler]
+    [pcp.routes.processor :as processor]
     [pcp.nrepl :as nrepl]
     [luminus.http-server :as http]
     [pcp.config :refer [env]]
@@ -54,4 +55,5 @@
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
 (defn -main [& args]
+  (processor/init)
   (start-app args))
