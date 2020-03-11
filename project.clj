@@ -34,6 +34,7 @@
                  [overtone/at-at "1.2.0"]
                  [digest "1.4.9"]
                  [me.raynes/fs "1.4.6"]
+                 [danlentz/clj-uuid "0.1.9"]
                  ;specifically for the pcp environment
                  [clj-http "3.10.0"]
                  [hiccup "1.0.5"]

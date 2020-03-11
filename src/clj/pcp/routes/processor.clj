@@ -9,7 +9,8 @@
    [clj-http.client :as client]
    [environ.core :refer [env]]
    [me.raynes.fs :as fs]
-   [me.raynes.fs.compression :as compression]))
+   [me.raynes.fs.compression :as compression]
+   [clj-uuid :as uuid]))
    
 
 (defn extract-request-parameters [request] ;malli can make this nicer
@@ -43,7 +44,6 @@
 
 (defn load-config []
   (let [new-config (read-string (get-config))]
-    (println new-config)
     (reset! config (merge new-config @config))))
 
 (defn write-and-extract-zip [stream path]
@@ -52,17 +52,10 @@
   (compression/unzip (str path ".zip") path)
   (fs/delete (str path ".zip")))
 
-(defn process-sites []
-  (doseq [site (-> @config :sites)]
-    (let [name (first site)
-          data (second site)]
-      (cond 
-        (contains? data :root)
-          nil    
-
-        (contains? data :github)
-          (let [zip (str/replace (:github data) ".git" "/archive/master.zip")
-                path (str ".pcp-sites/" (digest/sha-256 zip))]
+(defn get-from-github [name data]
+  (let [zip (str/replace (:github data) ".git" "/archive/master.zip")
+                path (str ".pcp-sites/" (uuid/v1))]
+            (println (str "Loading: " (:github data)))
             (->
                   (client/get zip { :headers {:Authorization (str "token " (:token data))}
                                             :as :byte-array})
@@ -72,8 +65,16 @@
                   (:body)
                   (write-and-extract-zip path))
             (let [new-root (-> (fs/find-files path #".*?src") first str (str/replace (str (.getCanonicalPath (clojure.java.io/file ".")) "/") ""))]
-              (swap! config assoc-in [:sites name :root] new-root)))
+              (swap! config assoc-in [:sites name :root] new-root))))
 
+(defn process-sites []
+  (doseq [site (-> @config :sites)]
+    (let [name (first site) data (second site)]
+      (cond 
+        (contains? data :root)
+          nil    
+        (contains? data :github)
+          (get-from-github name data)
           :else nil))))
 
 (defn get-root [host]
@@ -92,7 +93,6 @@
 (defn load-source [pcp-params]
   (let [root (get-root (:server-name pcp-params))
         path (add-extension (:path pcp-params))]
-    (println (:server-name pcp-params))
     (str root path)))
 
 (defn process-request [request]
@@ -111,11 +111,18 @@
     (process-request request)
     (catch Exception e (pcp/format-response 500 nil nil))))
 
+
+(defn clean [request]
+  (let [server (-> request :params :server) site (get-in @config [:sites (keyword server)])
+        name (first site) data (second site)]
+    (get-from-github name site)
+    (pcp/format-response 200 "success" "text/plain")))
+
 (defn process-routes []
   [""
    {:middleware [middleware/wrap-formats]}
+   ["/pcp-admin/clean" {:handler clean}]
    ["*" {:handler process-request}]])
-
 
 (defn init [] 
   (do
@@ -124,3 +131,4 @@
     (process-sites)
     (at-at/every 20000 process-sites my-pool)
     (at-at/every 30000 load-config my-pool)))
+

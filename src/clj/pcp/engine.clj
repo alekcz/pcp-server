@@ -31,17 +31,11 @@
       (resp/status status)
       (resp/content-type mime-type)))   
 
-(defn file-response 
-  ([body]
+(defn file-response [body]
     (if (resp/response? body)
       body
       (-> (resp/response body)    
           (resp/status 200))))
-  ([body mime]
-    (if (resp/response? body)
-      body
-      (-> (resp/response body)    
-          (resp/status 200)))))   
 
 (defn process-includes [includes source]
   (let [includes-used (re-seq #"\(include\s*?\"(.*?)\"\s*?\)" source)]

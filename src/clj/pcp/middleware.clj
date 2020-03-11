@@ -24,7 +24,7 @@
   (-> ((:middleware defaults) handler)
       (wrap-defaults
         (-> site-defaults
-            ;(assoc-in [:security :anti-forgery] false)
+            (assoc-in [:security :anti-forgery] false)
             (assoc-in  [:session :store] (ttl-memory-store (* 60 30)))))
       (wrap-content-type)
       (wrap-not-modified)))
