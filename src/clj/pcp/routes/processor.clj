@@ -121,7 +121,8 @@
 (defn rebuild [request]
   (let [server (-> request :params :server) site (get-in @config [:sites (keyword server)])
         name (first site) data (second site)]
-    (get-from-github name site)
+    (println site)
+    (get-from-github (keyword server) site)
     (pcp/format-response 200 "success" "text/plain")))
 
 (defn auth [request]
@@ -130,10 +131,14 @@
       (pcp/format-response 200 {:user user :token nil} "application/json")
       (pcp/format-response 403 {:error true} "application/json"))))
 
+(defn debug [request]
+  (pcp/format-response 200 (json/encode @config) "application/json"))
+
 (defn process-routes []
   [""
    {:middleware [middleware/wrap-formats]}
    ["/pcp-admin/reload" {:handler rebuild}]
+   ["/pcp-admin/debug" {:handler debug}]
    ["/pcp-admin/auth" {:handler auth}]
    ["*" {:handler process-request}]])
 
