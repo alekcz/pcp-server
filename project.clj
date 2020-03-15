@@ -35,6 +35,8 @@
                  [digest "1.4.9"]
                  [me.raynes/fs "1.4.6"]
                  [danlentz/clj-uuid "0.1.9"]
+                 [crypto-password "0.2.1"]
+                 [buddy/buddy-sign "3.1.0"]
                  ;specifically for the pcp environment
                  [clj-http "3.10.0"]
                  [hiccup "1.0.5"]

@@ -10,7 +10,11 @@
    [environ.core :refer [env]]
    [me.raynes.fs :as fs]
    [me.raynes.fs.compression :as compression]
-   [clj-uuid :as uuid]))
+   [clj-uuid :as uuid]
+   [cheshire.core :as json]
+   [crypto.password.scrypt :as password]
+   [buddy.sign.jwt :as jwt]
+   [buddy.core.hash :as hash]))
    
 
 (defn extract-request-parameters [request] ;malli can make this nicer
@@ -36,6 +40,7 @@
 (def CONFIG "./pcp.edn")
 (def DEFAULT-CONFIG "{:sites {:localhost {:root \"src\"}}}")
 (def my-pool (at-at/mk-pool))
+(def secret (hash/sha256 (str (uuid/v1))))
 
 (defn get-config []
   (or (env :pcp-config) (try (slurp CONFIG) (catch Exception e nil)) DEFAULT-CONFIG))
@@ -54,7 +59,7 @@
 
 (defn get-from-github [name data]
   (let [zip (str/replace (:github data) ".git" "/archive/master.zip")
-                path (str ".pcp-sites/" (uuid/v1))]
+        rando (uuid/v1)path (str ".pcp-sites/" rando)]
             (println (str "Loading: " (:github data)))
             (->
                   (client/get zip { :headers {:Authorization (str "token " (:token data))}
@@ -64,7 +69,7 @@
                   (client/get {:as :byte-array})
                   (:body)
                   (write-and-extract-zip path))
-            (let [new-root (-> (fs/find-files path #".*?src") first str (str/replace (str (.getCanonicalPath (clojure.java.io/file ".")) "/") ""))]
+            (let [new-root (-> (fs/find-files path (re-pattern (str ".*" rando ".*?src"))) first str (str/replace (str (.getCanonicalPath (clojure.java.io/file ".")) "/") ""))]
               (swap! config assoc-in [:sites name :root] new-root))))
 
 (defn process-sites []
@@ -112,16 +117,23 @@
     (catch Exception e (pcp/format-response 500 nil nil))))
 
 
-(defn clean [request]
+(defn rebuild [request]
   (let [server (-> request :params :server) site (get-in @config [:sites (keyword server)])
         name (first site) data (second site)]
     (get-from-github name site)
     (pcp/format-response 200 "success" "text/plain")))
 
+(defn auth [request]
+  (let [user (-> request :params :user) token (-> request :params :token)]
+    (if (password/check (env (keyword user)) token)
+      (pcp/format-response 200 {:user user :token nil} "application/json")
+      (pcp/format-response 403 {:error true} "application/json"))))
+
 (defn process-routes []
   [""
    {:middleware [middleware/wrap-formats]}
-   ["/pcp-admin/clean" {:handler clean}]
+   ["/pcp-admin/reload" {:handler rebuild}]
+   ["/pcp-admin/auth" {:handler auth}]
    ["*" {:handler process-request}]])
 
 (defn init [] 
@@ -132,3 +144,6 @@
     (at-at/every 20000 process-sites my-pool)
     (at-at/every 30000 load-config my-pool)))
 
+(defn login [url password]
+  (let [p (password/encrypt password)]
+    (client/get)))
