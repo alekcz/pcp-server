@@ -59,7 +59,7 @@
 
 (defn get-from-github [name data]
   (let [zip (str/replace (:github data) ".git" "/archive/master.zip")
-        rando (uuid/v1)path (str ".pcp-sites/" rando)]
+        rando (uuid/v1) path (str ".pcp-sites/" rando)]
             (println (str "Loading: " (:github data)))
             (->
                   (client/get zip { :headers {:Authorization (str "token " (:token data))}
@@ -69,7 +69,8 @@
                   (client/get {:as :byte-array})
                   (:body)
                   (write-and-extract-zip path))
-            (let [new-root (-> (fs/find-files path (re-pattern (str ".*" rando ".*?src"))) first str (str/replace (str (.getCanonicalPath (clojure.java.io/file ".")) "/") ""))]
+            (let [full-new-root (-> (fs/find-files path #".*?src") first .getPath)
+                  new-root (str/replace full-new-root (str (.getCanonicalPath (clojure.java.io/file ".")) "/") "")]
               (swap! config assoc-in [:sites name :root] new-root))))
 
 (defn process-sites []
