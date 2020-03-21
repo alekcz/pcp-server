@@ -1,4 +1,4 @@
-(ns pcp.layout
+(ns pcp-server.layout
   (:require
     [clojure.java.io]
     [selmer.parser :as parser]

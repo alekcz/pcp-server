@@ -1,7 +1,7 @@
-(defproject pcp "0.1.0-SNAPSHOT"
+(defproject pcp-server "0.1.0-SNAPSHOT"
 
   :description "PCP: Clojure Processor - Like drugs but better"
-  :url "https://github.com/alekcz/pcp"
+  :url "https://github.com/alekcz/pcp-ser"
 
   :dependencies [[ch.qos.logback/logback-classic "1.2.3"]
                  [cheshire "5.9.0"]
@@ -49,14 +49,14 @@
   :test-paths ["test/clj"]
   :resource-paths ["resources"]
   :target-path "target/%s/"
-  :main ^:skip-aot pcp.core
+  :main ^:skip-aot pcp-server.core
 
   :plugins []
 
   :profiles
   {:uberjar {:omit-source true
              :aot :all
-             :uberjar-name "pcp.jar"
+             :uberjar-name "pcp-server.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources"]}
 
@@ -69,8 +69,7 @@
                                  [ring/ring-devel "1.8.0"]
                                  [ring/ring-mock "0.4.0"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.24.1"]
-                                 [jonase/eastwood "0.3.5"]
-                                 [lein-shell "0.5.0"]]
+                                 [jonase/eastwood "0.3.5"]]
                   
                   :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
@@ -81,13 +80,4 @@
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
-   :profiles/test {}}
-   ;https://github.com/BrunoBonacci/graalvm-clojure/blob/master/doc/clojure-graalvm-native-binary.md
-   :aliases
-    {"native"
-    ["shell"
-      "native-image" "--report-unsupported-elements-at-runtime"
-      "--initialize-at-build-time"
-      ;"-jar" "./target/uberjar/${:uberjar-name:-${:name}-${:version}.jar}"
-      "-jar" "./target/uberjar/${:uberjar-name:-${:name}.jar}"
-      "-H:Name=./target/${:name}"]})
+   :profiles/test {}})

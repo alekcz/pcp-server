@@ -1,8 +1,8 @@
-(ns pcp.env
+(ns pcp-server.env
   (:require
     [selmer.parser :as parser]
     [clojure.tools.logging :as log]
-    [pcp.dev-middleware :refer [wrap-dev]]))
+    [pcp-server.dev-middleware :refer [wrap-dev]]))
 
 (def defaults
   {:init

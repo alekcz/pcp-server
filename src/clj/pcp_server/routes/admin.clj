@@ -1,6 +1,6 @@
-(ns pcp.routes.admin
+(ns pcp-server.routes.admin
   (:require
-    [pcp.middleware :as middleware]))
+    [pcp-server.middleware :as middleware]))
 
 (defn admin-routes []
 [""

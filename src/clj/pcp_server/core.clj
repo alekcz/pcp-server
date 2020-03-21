@@ -1,10 +1,10 @@
-(ns pcp.core
+(ns pcp-server.core
   (:require
-    [pcp.handler :as handler]
-    [pcp.routes.processor :as processor]
-    [pcp.nrepl :as nrepl]
+    [pcp-server.handler :as handler]
+    [pcp-server.routes.processor :as processor]
+    [pcp-server.nrepl :as nrepl]
     [luminus.http-server :as http]
-    [pcp.config :refer [env]]
+    [pcp-server.config :refer [env]]
     [clojure.tools.cli :refer [parse-opts]]
     [clojure.tools.logging :as log]
     [mount.core :as mount])

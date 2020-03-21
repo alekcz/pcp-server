@@ -1,13 +1,13 @@
-(ns pcp.handler
+(ns pcp-server.handler
   (:require
-    [pcp.middleware :as middleware]
-    [pcp.layout :refer [error-page]]
-    [pcp.routes.processor :refer [process-routes]]
-    [pcp.routes.admin :refer [admin-routes]]
+    [pcp-server.middleware :as middleware]
+    [pcp-server.layout :refer [error-page]]
+    [pcp-server.routes.processor :refer [process-routes]]
+    [pcp-server.routes.admin :refer [admin-routes]]
     [reitit.ring :as ring]
     [ring.middleware.content-type :refer [wrap-content-type]]
     [ring.middleware.webjars :refer [wrap-webjars]]
-    [pcp.env :refer [defaults]]
+    [pcp-server.env :refer [defaults]]
     [mount.core :as mount]))
 
 (mount/defstate init-app

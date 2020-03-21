@@ -1,12 +1,12 @@
-(ns pcp.middleware
+(ns pcp-server.middleware
   (:require
-    [pcp.env :refer [defaults]]
+    [pcp-server.env :refer [defaults]]
     [cheshire.generate :as cheshire]
     [cognitect.transit :as transit]
     [clojure.tools.logging :as log]
-    [pcp.middleware.formats :as formats]
+    [pcp-server.middleware.formats :as formats]
     [muuntaja.middleware :refer [wrap-format wrap-params]]
-    [pcp.config :refer [env]]
+    [pcp-server.config :refer [env]]
     [ring-ttl-session.core :refer [ttl-memory-store]]
     [ring.middleware.content-type :refer [wrap-content-type]]
     [ring.middleware.not-modified :refer [wrap-not-modified]]

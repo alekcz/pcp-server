@@ -1,12 +1,12 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
   (:require
-   [pcp.config :refer [env]]
+   [pcp-server.config :refer [env]]
     [clojure.pprint]
     [clojure.spec.alpha :as s]
     [expound.alpha :as expound]
     [mount.core :as mount]
-    [pcp.core :refer [start-app]]))
+    [pcp-server.core :refer [start-app]]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
@@ -16,12 +16,12 @@
   "Starts application.
   You'll usually want to run this on startup."
   []
-  (mount/start-without #'pcp.core/repl-server))
+  (mount/start-without #'pcp-server.core/repl-server))
 
 (defn stop
   "Stops application."
   []
-  (mount/stop-except #'pcp.core/repl-server))
+  (mount/stop-except #'pcp-server.core/repl-server))
 
 (defn restart
   "Restarts application."

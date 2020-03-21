@@ -1,4 +1,4 @@
-(ns pcp.nrepl
+(ns pcp-server.nrepl
   (:require
     [nrepl.server :as nrepl]
     [clojure.tools.logging :as log]))

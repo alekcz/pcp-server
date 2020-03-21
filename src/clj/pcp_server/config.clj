@@ -1,4 +1,4 @@
-(ns pcp.config
+(ns pcp-server.config
   (:require
     [cprop.core :refer [load-config]]
     [cprop.source :as source]

@@ -1,4 +1,4 @@
-(ns pcp.dev-middleware
+(ns pcp-server.dev-middleware
   (:require
     [ring.middleware.reload :refer [wrap-reload]]
     [selmer.middleware :refer [wrap-error-page]]

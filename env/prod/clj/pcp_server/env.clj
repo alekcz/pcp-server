@@ -1,4 +1,4 @@
-(ns pcp.env
+(ns pcp-server.env
   (:require [clojure.tools.logging :as log]))
 
 (def defaults

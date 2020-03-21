@@ -1,9 +1,9 @@
-(ns pcp.test.handler
+(ns pcp-server.test.handler
   (:require
     [clojure.test :refer :all]
     [ring.mock.request :refer :all]
-    [pcp.handler :refer :all]
-    [pcp.middleware.formats :as formats]
+    [pcp-server.handler :refer :all]
+    [pcp-server.middleware.formats :as formats]
     [muuntaja.core :as m]
     [mount.core :as mount]))
 
@@ -13,8 +13,8 @@
 (use-fixtures
   :once
   (fn [f]
-    (mount/start #'pcp.config/env
-                 #'pcp.handler/app-routes)
+    (mount/start #'pcp-server.config/env
+                 #'pcp-server.handler/app-routes)
     (f)))
 
 (deftest test-app
